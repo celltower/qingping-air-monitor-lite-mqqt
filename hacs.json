@@ -1,0 +1,7 @@
+{
+  "name": "Qingping Air Monitor",
+  "homeassistant": "2024.1.0",
+  "render_readme": true,
+  "domains": ["sensor", "binary_sensor", "number", "switch", "select", "text"],
+  "iot_class": "local_push"
+}

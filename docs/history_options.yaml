@@ -1,0 +1,90 @@
+# ============================================================
+# OPTION 2: SIMPLE RECORDER SETUP (No InfluxDB needed)
+# ============================================================
+# Add this to your configuration.yaml
+# ============================================================
+
+recorder:
+  purge_keep_days: 10
+  commit_interval: 1
+  
+  # Only record what we need (saves space = faster queries)
+  include:
+    entity_globs:
+      - sensor.qingping_*_temperature
+      - sensor.qingping_*_humidity
+      - sensor.qingping_*_co2
+      - sensor.qingping_*_pm2_5
+      - sensor.qingping_*_pm10
+      - sensor.qingping_*_battery
+      - sensor.qingping_*_tvoc
+      - number.qingping_*
+
+# ============================================================
+# THE TRUTH ABOUT HOME ASSISTANT HISTORY:
+# ============================================================
+#
+# The RAW DATA is stored at 1-minute intervals!
+# The problem is the GRAPH VISUALIZATION aggregates it.
+#
+# Standard History Card behavior:
+# - Zoom: 1 hour  → Shows ALL data points (1 min) ✅
+# - Zoom: 6 hours → Aggregates to ~5 min ❌
+# - Zoom: 24 hours → Aggregates more ❌
+#
+# SOLUTION: Use cards that DON'T aggregate!
+#
+# ============================================================
+
+# ============================================================
+# HISTORY CARD WITH MORE DETAIL
+# ============================================================
+# This shows more data points than default:
+
+type: history-graph
+title: Qingping Sensoren (24h)
+hours_to_show: 24
+refresh_interval: 60
+entities:
+  - sensor.qingping_air_monitor_XXXX_temperature
+  - sensor.qingping_air_monitor_XXXX_humidity
+  - sensor.qingping_air_monitor_XXXX_co2
+
+# ============================================================
+# BETTER: STATISTICS-GRAPH CARD (Built-in, no HACS!)
+# ============================================================
+# This uses the statistics system which keeps 5-min data for 10 days!
+
+type: statistics-graph
+title: Temperature (5-min resolution, 10 days!)
+period: 5minute
+entities:
+  - sensor.qingping_air_monitor_XXXX_temperature
+stat_types:
+  - mean
+  - min
+  - max
+days_to_show: 10
+
+# ============================================================
+# BEST: APEXCHARTS-CARD (HACS)
+# ============================================================
+# Install via HACS → Frontend → ApexCharts Card
+#
+# This card fetches RAW data and displays without aggregation!
+
+type: custom:apexcharts-card
+header:
+  show: true
+  title: Temperature (TRUE 1-minute data!)
+graph_span: 24h
+span:
+  end: now
+series:
+  - entity: sensor.qingping_air_monitor_XXXX_temperature
+    stroke_width: 2
+    group_by:
+      func: raw      # ← KEY! Shows raw data, no aggregation!
+      duration: 1min
+
+# ============================================================

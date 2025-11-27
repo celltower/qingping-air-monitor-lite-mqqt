@@ -1,0 +1,95 @@
+# ============================================================
+# INFLUXDB SETUP FOR 1-MINUTE HISTORY (24h) + 5-MIN AFTER
+# ============================================================
+#
+# This gives you EXACTLY what you want:
+# - Last 24 hours: 1-minute resolution
+# - After 24 hours: 5-minute averages
+# - After 7 days: 1-hour averages
+#
+# ============================================================
+
+# STEP 1: Install InfluxDB Add-on
+# --------------------------------
+# Settings → Add-ons → Add-on Store → Search "InfluxDB" → Install
+# Start the add-on
+# Open Web UI (default: http://homeassistant:8086)
+
+# STEP 2: Create Database and Retention Policies
+# -----------------------------------------------
+# In InfluxDB Web UI → Explore → Script Editor:
+
+CREATE DATABASE "home_assistant"
+
+# Keep raw data for 24 hours
+CREATE RETENTION POLICY "24h_raw" ON "home_assistant" DURATION 24h REPLICATION 1 DEFAULT
+
+# Keep 5-minute averages for 7 days
+CREATE RETENTION POLICY "7d_5min" ON "home_assistant" DURATION 7d REPLICATION 1
+
+# Keep 1-hour averages for 1 year
+CREATE RETENTION POLICY "1y_1hour" ON "home_assistant" DURATION 365d REPLICATION 1
+
+# STEP 3: Create Continuous Queries (Auto-Downsample)
+# ----------------------------------------------------
+# This automatically creates 5-minute averages from raw data:
+
+CREATE CONTINUOUS QUERY "cq_5min" ON "home_assistant"
+BEGIN
+  SELECT mean("value") AS "value"
+  INTO "7d_5min"."qingping_sensors"
+  FROM "24h_raw"."°C"
+  GROUP BY time(5m), *
+END
+
+CREATE CONTINUOUS QUERY "cq_1hour" ON "home_assistant"
+BEGIN
+  SELECT mean("value") AS "value"
+  INTO "1y_1hour"."qingping_sensors"
+  FROM "7d_5min"."qingping_sensors"
+  GROUP BY time(1h), *
+END
+
+# ============================================================
+# STEP 4: Configure Home Assistant
+# ============================================================
+# Add to configuration.yaml:
+
+influxdb:
+  host: a]d5f003-influxdb  # or localhost / IP
+  port: 8086
+  database: home_assistant
+  default_measurement: state
+  include:
+    entity_globs:
+      - sensor.qingping_*_temperature
+      - sensor.qingping_*_humidity
+      - sensor.qingping_*_co2
+      - sensor.qingping_*_pm2_5
+      - sensor.qingping_*_pm10
+      - sensor.qingping_*_battery
+      - sensor.qingping_*_tvoc
+
+# ============================================================
+# STEP 5: Install Grafana for Beautiful Graphs
+# ============================================================
+# Settings → Add-ons → Add-on Store → Search "Grafana" → Install
+# 
+# Connect Grafana to InfluxDB:
+# - Data Sources → Add → InfluxDB
+# - URL: http://a]d5f003-influxdb:8086
+# - Database: home_assistant
+#
+# Create Dashboard with 1-minute resolution!
+
+# ============================================================
+# RESULT:
+# ============================================================
+#
+# Timeline:          Resolution:
+# ─────────────────────────────────
+# Now → 24h ago      1 minute  ✅
+# 24h → 7 days ago   5 minutes ✅
+# 7 days → 1 year    1 hour    ✅
+#
+# ============================================================

@@ -1,0 +1,51 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Qingping Monitor Setup",
+        "description": "Choose how to add your Qingping Air Monitor",
+        "data": {
+          "method": "Setup Method"
+        }
+      },
+      "discovery": {
+        "title": "Select Device",
+        "description": "Found {count} device(s). Select the device to add:",
+        "data": {
+          "device": "Device",
+          "action": "Action"
+        }
+      },
+      "manual": {
+        "title": "Manual Setup",
+        "description": "Enter the MAC address of your Qingping device.\nExample: {example}",
+        "data": {
+          "mac": "MAC Address"
+        }
+      }
+    },
+    "error": {
+      "invalid_mac": "Invalid MAC address format. Use 12 hex characters.",
+      "no_device_selected": "Please select a device",
+      "no_devices_found": "No Qingping devices found. Make sure your device is connected to MQTT."
+    },
+    "abort": {
+      "already_configured": "Device is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Qingping Monitor Options",
+        "description": "Configure MQTT topics for this device",
+        "data": {
+          "state_topic": "State Topic",
+          "availability_topic": "Availability Topic"
+        }
+      }
+    },
+    "error": {
+      "required": "This field is required"
+    }
+  }
+}
