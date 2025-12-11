@@ -106,9 +106,11 @@ class QingpingDeveloperApi:
             
             async with session.get(url, headers=headers) as resp:
                 result = await resp.json()
+                _LOGGER.debug("Developer API: Get configs response: %s", result)
                 
                 if result.get("code") == 200:
-                    configs = result.get("data", {}).get("configs", [])
+                    # API returns "configList" not "configs"!
+                    configs = result.get("data", {}).get("configList", [])
                     _LOGGER.info("Developer API: Found %d configs", len(configs))
                     return configs
                 else:
