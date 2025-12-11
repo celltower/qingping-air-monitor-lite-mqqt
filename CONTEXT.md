@@ -313,6 +313,7 @@ class QingpingWatchdog:
 | Switch | night_mode_enabled, night_mode_auto, display_always_on, temp_unit_fahrenheit |
 | Select | display_show (temp/humidity/co2/pm25/pm10) |
 | Text | device_name |
+| **Button** | **Reconnect** - Gerät neu an Cloud-Config binden (für Recovery) |
 
 ---
 
@@ -343,7 +344,7 @@ class QingpingWatchdog:
 
 ---
 
-## 🎯 v4.0.2 Updates (Dezember 2024)
+## 🎯 v4.0.4 Updates (Dezember 2024)
 
 ### ✅ Reload-Funktionalität
 - Integration kann jetzt neu geladen werden ohne HA Neustart!
@@ -419,4 +420,4 @@ logger:
 ---
 
 *Zuletzt aktualisiert: Dezember 2024*
-*Version: 4.0.2*
+*Version: 4.0.4*
