@@ -41,21 +41,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Register update listener for options changes
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
     
-    # Show setup success notification with helpful tips
-    mac = entry.data.get("mac", "")
-    formatted_mac = ":".join(mac[i:i+2] for i in range(0, 12, 2)) if mac else ""
-    
-    hass.components.persistent_notification.async_create(
-        f"**Gerät {formatted_mac} erfolgreich eingerichtet!** ✅\n\n"
-        f"**Wichtige Hinweise:**\n"
-        f"- Es kann **bis zu 5 Minuten** dauern, bis die ersten Messdaten ankommen\n"
-        f"- Stelle sicher, dass das Gerät **am Strom** ist\n"
-        f"- **Wische kurz über den Bildschirm** um das Gerät aufzuwecken\n\n"
-        f"Das Gerät sendet dann automatisch Daten an Home Assistant.",
-        title="Qingping Air Monitor Setup",
-        notification_id=f"qingping_setup_{mac}",
-    )
-    
     _LOGGER.debug("%s: setup_entry OK: %s", DOMAIN, entry.entry_id)
     return True
 

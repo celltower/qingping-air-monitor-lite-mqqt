@@ -140,30 +140,11 @@ class QingpingReconnectButton(ButtonEntity):
             
             if await api.rebind_device(self._mac, config_id):
                 _LOGGER.info("✅ Device %s successfully reconnected!", self._mac)
-                
-                # Send notification
-                self.hass.components.persistent_notification.async_create(
-                    f"Gerät {_format_mac(self._mac)} wurde erfolgreich neu verbunden. "
-                    f"Das Gerät sollte in wenigen Minuten wieder Daten senden.",
-                    title="Qingping Reconnect erfolgreich",
-                    notification_id=f"qingping_reconnect_{self._mac}",
-                )
             else:
                 _LOGGER.error("Reconnect failed: rebind_device returned False")
-                self.hass.components.persistent_notification.async_create(
-                    f"Reconnect für {_format_mac(self._mac)} fehlgeschlagen. "
-                    f"Prüfe die Logs für Details.",
-                    title="Qingping Reconnect fehlgeschlagen",
-                    notification_id=f"qingping_reconnect_{self._mac}",
-                )
                 
         except Exception as e:
             _LOGGER.error("Reconnect error: %s", e)
-            self.hass.components.persistent_notification.async_create(
-                f"Reconnect Fehler: {e}",
-                title="Qingping Reconnect fehlgeschlagen",
-                notification_id=f"qingping_reconnect_{self._mac}",
-            )
         finally:
             await api.close()
 
