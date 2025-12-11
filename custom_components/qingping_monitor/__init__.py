@@ -10,7 +10,7 @@ from .api import QingpingApiClient
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "number", "switch", "select", "text"]
+PLATFORMS = ["sensor", "number", "switch", "select", "text", "button"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
