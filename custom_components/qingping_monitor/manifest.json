@@ -1,12 +1,12 @@
 {
   "domain": "qingping_monitor",
   "name": "Qingping Air Monitor",
-  "codeowners": [],
+  "codeowners": ["@celltower"],
   "config_flow": true,
   "dependencies": ["mqtt"],
-  "documentation": "https://github.com/your-repo/qingping-monitor",
+  "documentation": "https://github.com/celltower/qingping-air-monitor-lite-mqqt",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/your-repo/qingping-monitor/issues",
+  "issue_tracker": "https://github.com/celltower/qingping-air-monitor-lite-mqqt/issues",
   "requirements": ["aiohttp"],
   "version": "4.0.0"
 }
