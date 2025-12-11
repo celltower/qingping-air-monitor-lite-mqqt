@@ -61,6 +61,8 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._qingping_credentials: dict[str, str] = {}
         self._existing_configs: list[dict[str, Any]] = []
         self._selected_config_id: int | None = None
+        self._provisioned_mac: str = ""
+        self._provisioned_count: int = 0
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Handle initial step - choose setup method."""
@@ -450,25 +452,48 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Close API
         await self._developer_api.close()
 
-        # Create entry for first device
+        # Store provisioned devices for entry creation
         first_mac = macs[0]
-        await self.async_set_unique_id(f"{DOMAIN}_{first_mac}")
-        self._abort_if_unique_id_configured()
+        self._provisioned_mac = first_mac
+        self._provisioned_count = len(macs)
         
-        data = {
-            CONF_MAC: first_mac,
-            CONF_STATE_TOPIC: STATE_TOPIC_TEMPLATE.format(mac=first_mac),
-            CONF_AVAIL_TOPIC: AVAIL_TOPIC_TEMPLATE.format(mac=first_mac),
-            CONF_QINGPING_EMAIL: self._qingping_credentials.get(CONF_QINGPING_EMAIL),
-            CONF_QINGPING_PASSWORD: self._qingping_credentials.get(CONF_QINGPING_PASSWORD),
-            **self._mqtt_config,
-        }
+        # Show success step with important info
+        return await self.async_step_setup_complete()
+
+    async def async_step_setup_complete(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Final step showing success message and tips."""
+        if user_input is not None:
+            # User clicked finish - create the entry
+            first_mac = self._provisioned_mac
+            await self.async_set_unique_id(f"{DOMAIN}_{first_mac}")
+            self._abort_if_unique_id_configured()
+            
+            data = {
+                CONF_MAC: first_mac,
+                CONF_STATE_TOPIC: STATE_TOPIC_TEMPLATE.format(mac=first_mac),
+                CONF_AVAIL_TOPIC: AVAIL_TOPIC_TEMPLATE.format(mac=first_mac),
+                CONF_QINGPING_EMAIL: self._qingping_credentials.get(CONF_QINGPING_EMAIL),
+                CONF_QINGPING_PASSWORD: self._qingping_credentials.get(CONF_QINGPING_PASSWORD),
+                **self._mqtt_config,
+            }
+            
+            title = f"Qingping Air Monitor ({_format_mac(first_mac)})"
+            if self._provisioned_count > 1:
+                title += f" +{self._provisioned_count-1} more"
+            
+            return self.async_create_entry(title=title, data=data)
         
-        title = f"Qingping Air Monitor ({_format_mac(first_mac)})"
-        if len(macs) > 1:
-            title += f" +{len(macs)-1} more"
-        
-        return self.async_create_entry(title=title, data=data)
+        # Show success info
+        return self.async_show_form(
+            step_id="setup_complete",
+            data_schema=vol.Schema({}),
+            description_placeholders={
+                "mac": _format_mac(self._provisioned_mac),
+                "count": str(self._provisioned_count),
+            }
+        )
 
     # =========================================================================
     # MQTT SCAN FLOW

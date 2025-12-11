@@ -54,6 +54,10 @@
         "data": {
           "mac": "MAC Address"
         }
+      },
+      "setup_complete": {
+        "title": "✅ Setup Complete!",
+        "description": "**Device {mac} configured successfully!**\n\n**Important:**\n- It may take **up to 5 minutes** for the first data to arrive\n- Make sure the device is **powered on**\n- **Swipe the screen** to wake up the device\n\nClick **Finish** to complete the setup."
       }
     },
     "error": {
