@@ -181,15 +181,20 @@ class QingpingDeveloperApi:
                 },
             }
             
+            _LOGGER.debug("Developer API: Sending config create request to %s", DEV_CONFIG_URL)
+            _LOGGER.debug("Developer API: Payload: %s", payload)
+            
             async with session.post(DEV_CONFIG_URL, headers=headers, json=payload) as resp:
                 result = await resp.json()
+                _LOGGER.debug("Developer API: Response: %s", result)
                 
                 if result.get("code") == 200:
                     config_id = result.get("data", {}).get("id")
                     _LOGGER.info("Developer API: Created config '%s' (ID: %s)", name, config_id)
                     return config_id
                 else:
-                    _LOGGER.error("Developer API: Create config failed - %s", result.get("msg"))
+                    _LOGGER.error("Developer API: Create config failed - code=%s, msg=%s, full_response=%s", 
+                                result.get("code"), result.get("msg"), result)
                     return None
                     
         except Exception as e:

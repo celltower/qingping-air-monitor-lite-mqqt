@@ -406,6 +406,7 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _provision_devices(self, macs: list[str]) -> FlowResult:
         """Provision selected devices with MQTT config."""
         if not self._developer_api:
+            _LOGGER.error("Cannot provision: developer_api is None")
             return self.async_abort(reason="not_logged_in")
 
         # Use selected config or create new one
@@ -414,6 +415,10 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.info("Using pre-selected config ID: %s", config_id)
         else:
             # Create new MQTT config
+            _LOGGER.info("Creating new MQTT config with host=%s, port=%s, user=%s",
+                        self._mqtt_config.get(CONF_MQTT_HOST, ""),
+                        self._mqtt_config.get(CONF_MQTT_PORT, 1883),
+                        self._mqtt_config.get(CONF_MQTT_USERNAME, ""))
             config_id = await self._developer_api.create_mqtt_config(
                 name="Home Assistant Auto-Config",
                 mqtt_host=self._mqtt_config.get(CONF_MQTT_HOST, ""),
@@ -421,8 +426,11 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 mqtt_username=self._mqtt_config.get(CONF_MQTT_USERNAME, ""),
                 mqtt_password=self._mqtt_config.get(CONF_MQTT_PASSWORD, ""),
             )
+            _LOGGER.info("create_mqtt_config returned: %s", config_id)
 
         if not config_id:
+            _LOGGER.error("Config creation failed! selected_config_id=%s, mqtt_config=%s",
+                         self._selected_config_id, self._mqtt_config)
             return self.async_abort(reason="config_creation_failed")
 
         # Process each device

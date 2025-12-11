@@ -343,7 +343,7 @@ class QingpingWatchdog:
 
 ---
 
-## 🎯 v4.1.0 Updates (Dezember 2024)
+## 🎯 v4.0.2 Updates (Dezember 2024)
 
 ### ✅ Reload-Funktionalität
 - Integration kann jetzt neu geladen werden ohne HA Neustart!
@@ -419,4 +419,4 @@ logger:
 ---
 
 *Zuletzt aktualisiert: Dezember 2024*
-*Version: 4.1.0*
+*Version: 4.0.2*
