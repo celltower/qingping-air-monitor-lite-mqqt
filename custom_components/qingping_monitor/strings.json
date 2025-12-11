@@ -1,0 +1,83 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Qingping Air Monitor",
+        "description": "Choose how to set up your device",
+        "data": {
+          "method": "Setup Method"
+        }
+      },
+      "qingping_login": {
+        "title": "Qingping Account",
+        "description": "Login with your Qingping+ or Qingping IoT app credentials",
+        "data": {
+          "qingping_email": "Email",
+          "qingping_password": "Password"
+        }
+      },
+      "mqtt_config": {
+        "title": "MQTT Broker",
+        "description": "Enter your MQTT broker details. Your devices will send data here.",
+        "data": {
+          "mqtt_host": "MQTT Host",
+          "mqtt_port": "MQTT Port",
+          "mqtt_username": "MQTT Username",
+          "mqtt_password": "MQTT Password"
+        }
+      },
+      "select_devices": {
+        "title": "Select Devices",
+        "description": "Found {count} device(s). Select which to set up:",
+        "data": {
+          "devices": "Devices"
+        }
+      },
+      "no_devices": {
+        "title": "No Devices Found",
+        "description": "No Air Monitor Lite devices found in your Qingping account. Make sure you've paired the device in the Qingping+ app first."
+      },
+      "discovery": {
+        "title": "Device Discovery",
+        "description": "Select a device or scan again",
+        "data": {
+          "device": "Device",
+          "action": "Action"
+        }
+      },
+      "manual": {
+        "title": "Manual Setup",
+        "description": "Enter the MAC address. Example: {example}",
+        "data": {
+          "mac": "MAC Address"
+        }
+      }
+    },
+    "error": {
+      "login_failed": "Login failed. Check your credentials.",
+      "invalid_mac": "Invalid MAC address",
+      "no_device_selected": "Please select at least one device",
+      "no_devices_found": "No devices found on MQTT",
+      "no_devices_in_cloud": "No devices in your Qingping account"
+    },
+    "abort": {
+      "already_configured": "Device already configured",
+      "not_logged_in": "Not logged in",
+      "no_devices": "No devices found",
+      "config_creation_failed": "Could not create MQTT config"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "data": {
+          "state_topic": "State Topic",
+          "availability_topic": "Availability Topic",
+          "api_app_key": "API App Key",
+          "api_app_secret": "API App Secret"
+        }
+      }
+    }
+  }
+}

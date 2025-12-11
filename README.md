@@ -1,39 +1,46 @@
-<p align="center">
-  <img src="docs/logo.png" alt="Qingping Air Monitor Lite" width="200"/>
-</p>
+# 🌿 Qingping Air Monitor for Home Assistant
 
-<h1 align="center">Qingping Air Monitor</h1>
+[![HACS](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![GitHub Release](https://img.shields.io/github/v/release/celltower/qingping-air-monitor-lite-mqqt)](https://github.com/celltower/qingping-air-monitor-lite-mqqt/releases)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-<p align="center">
-  <strong>Home Assistant integration for Qingping Air Monitor Lite via MQTT</strong>
-</p>
+**The ultimate Home Assistant integration for Qingping Air Monitor Lite (CGDN1)**
 
 <p align="center">
-  <a href="https://github.com/hacs/integration"><img src="https://img.shields.io/badge/HACS-Custom-41BDF5.svg" alt="HACS Custom"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
-  <img src="https://img.shields.io/badge/version-3.2.4-green.svg" alt="Version">
-  <img src="https://img.shields.io/badge/HA-2024.1+-blue.svg" alt="HA Version">
-</p>
-
-<p align="center">
-  <a href="#-features">Features</a> •
-  <a href="#-installation">Installation</a> •
-  <a href="#-device-setup">Device Setup</a> •
-  <a href="#-entities">Entities</a> •
-  <a href="#-troubleshooting">Troubleshooting</a>
+  <img src="https://raw.githubusercontent.com/celltower/qingping-air-monitor-lite-mqqt/main/images/logo.png" width="200">
 </p>
 
 ---
 
 ## ✨ Features
 
-| | |
-|---|---|
-| 🌡️ **Environmental Monitoring** | Temperature, Humidity, CO2, PM2.5, PM10, Battery |
-| 📡 **100% Local** | MQTT-based, no cloud dependency after setup |
-| ⚙️ **Full Device Control** | 28 settings configurable from Home Assistant |
-| 🔍 **Auto-Discovery** | Automatic device detection via MQTT |
-| 🌐 **Multi-Language** | English & German included |
+| Feature | Description |
+|---------|-------------|
+| 🚀 **One-Click Setup** | Enter Qingping credentials → Done! |
+| 🌡️ **All Sensors** | Temperature, Humidity, CO2, PM2.5, PM10, Battery |
+| ⚙️ **28 Settings** | Full device control from Home Assistant |
+| 🐕 **Watchdog** | Alerts when devices go offline |
+| 🔄 **Keep-Alive** | Prevents connection drops |
+| ✅ **Type 18 ACK** | Proper MQTT protocol compliance |
+| 🌐 **Bilingual** | English & German |
+
+---
+
+## 🚀 One-Click Setup
+
+No more manual MQTT configuration on the Qingping Developer Portal!
+
+```
+You provide:              Integration does automatically:
+┌────────────────────┐    ┌─────────────────────────────────┐
+│ • Qingping Email   │    │ ✅ Login to Qingping Cloud      │
+│ • Qingping Password│ →  │ ✅ Create MQTT configuration    │
+│ • MQTT Broker IP   │    │ ✅ Find all your devices        │
+│ • MQTT Credentials │    │ ✅ Bind devices to your broker  │
+└────────────────────┘    │ ✅ Auto-discover in HA          │
+                          │ ✅ Create all entities          │
+                          └─────────────────────────────────┘
+```
 
 ---
 
@@ -41,137 +48,53 @@
 
 ### HACS (Recommended)
 
-1. Open **HACS** → **Integrations** → ⋮ → **Custom repositories**
-2. Add this repository URL, select **Integration**
-3. Search "Qingping Monitor" → **Install**
-4. **Restart Home Assistant**
+1. Open **HACS** → **Integrations**
+2. Click the **⋮** menu → **Custom repositories**
+3. Add: `https://github.com/celltower/qingping-air-monitor-lite-mqqt`
+4. Select category: **Integration**
+5. Click **Add**
+6. Search for "Qingping Air Monitor" → **Download**
+7. **Restart Home Assistant**
 
-### Manual
+### Manual Installation
 
-```bash
-# Download and extract to config/custom_components/
-config/
-└── custom_components/
-    └── qingping_monitor/
-        ├── __init__.py
-        ├── sensor.py
-        └── ...
-```
-
-Restart Home Assistant after installation.
+1. Download the [latest release](https://github.com/celltower/qingping-air-monitor-lite-mqqt/releases)
+2. Extract `custom_components/qingping_monitor` to your HA `config/custom_components/`
+3. Restart Home Assistant
 
 ---
 
-## 🔧 Device Setup
-
-> ⚠️ **Important:** Before adding the integration, you must configure your Qingping device for MQTT via the Developer Portal. This is a one-time setup.
+## 🔧 Setup
 
 ### Prerequisites
 
-- ✅ Qingping Air Monitor Lite
-- ✅ Qingping+ App (iOS/Android) with device paired
-- ✅ MQTT Broker (e.g., Mosquitto)
-- ✅ Qingping Developer Account
+1. ✅ Device paired in **Qingping+** or **Qingping IoT** app
+2. ✅ **MQTT Broker** running (e.g., Mosquitto add-on)
+3. ✅ **MQTT Integration** configured in Home Assistant
 
-### Quick Overview
+### Configuration
 
-```
-1. Create Developer Account    →  developer.qingping.co
-2. Create MQTT Configuration   →  Enter your broker details
-3. Bind Device to Config       →  Link your device to MQTT
-4. Wait 1-2 minutes           →  Device syncs with cloud
-5. Add HA Integration          →  Auto-discovery or manual MAC
-```
+1. Go to **Settings** → **Devices & Services** → **Add Integration**
+2. Search for **"Qingping Air Monitor"**
+3. Choose **"🚀 Automatic Setup"** (recommended)
+4. Enter your **Qingping account** credentials
+5. Enter your **MQTT broker** details
+6. Select devices to set up
+7. **Done!** Data arrives within 1-2 minutes
 
-### Step-by-Step Guide
+### Alternative Setup Methods
 
-<details>
-<summary>📖 <strong>Click to expand full setup instructions</strong></summary>
-
-#### Step 1: MQTT Broker
-
-Make sure you have an MQTT broker running. Example for Mosquitto:
-
-```bash
-# Create MQTT user
-mosquitto_passwd -c /etc/mosquitto/passwd qingping_user
-```
-
-#### Step 2: Developer Account
-
-1. Go to **https://developer.qingping.co**
-2. Create an account
-
-> ⚠️ **Use the same email as your Qingping+ App account!**
-
-#### Step 3: Create MQTT Configuration
-
-1. Go to **https://developer.qingping.co/private/access-configuration**
-2. Click **"Add Configuration"**
-3. Fill in:
-
-| Field | Value |
-|-------|-------|
-| Name | `home-assistant` (any name) |
-| Device Model | `Qingping Air Monitor Lite` |
-| Private Type | `Self-built MQTT` |
-| Host | Your MQTT broker IP |
-| Port | `1883` |
-| User Name | Your MQTT username |
-| Password | Your MQTT password |
-| Client ID | `qingping-{mac}` |
-| Up Topic | `qingping/{mac}/up` |
-| Down Topic | `qingping/{mac}/down` |
-| Interval of Uploading | `1 minute` |
-| Interval of Recording | `1 minute` |
-
-4. Click **"Test"** to verify connection
-5. Click **"Confirm"** to save
-
-#### Step 4: Bind Device
-
-1. Go to **https://developer.qingping.co/private/device-binding**
-2. Click **"Add Device"**
-3. Select **Qingping Air Monitor Lite**
-4. Select your device from the list
-5. Select the MQTT config from Step 3
-6. Click **"Confirm"**
-
-> 💡 Device not showing? Open Qingping+ App and re-add/refresh the device.
-
-#### Step 5: Wait for Sync
-
-The device receives the MQTT config on next cloud sync (~1-2 minutes).
-
-Verify data is flowing in MQTT Explorer:
-```
-Topic: qingping/{MAC}/up
-```
-
-</details>
-
-📖 **Detailed guides:** [English](docs/SETUP_EN.md) | [Deutsch](docs/SETUP_DE.md)
-
----
-
-## 🏠 Add Integration
-
-Once your device is sending MQTT data:
-
-1. **Settings** → **Devices & Services** → **Add Integration**
-2. Search **"Qingping Monitor"**
-3. Choose **Auto-Scan** (recommended) or enter MAC manually
-4. Done! 🎉
+- **🔍 Scan MQTT** - For devices already sending to your broker
+- **✏️ Manual** - Enter MAC address directly
 
 ---
 
 ## 📊 Entities
 
 ### Sensors
-
 | Entity | Description | Unit |
 |--------|-------------|------|
-| 🌡️ Temperature | Current temperature | °C/°F |
+| 🌡️ Temperature | Current temperature | °C |
 | 💧 Humidity | Relative humidity | % |
 | 💨 CO2 | Carbon dioxide | ppm |
 | 🌫️ PM2.5 | Fine particles | µg/m³ |
@@ -179,98 +102,82 @@ Once your device is sending MQTT data:
 | 🔋 Battery | Battery level | % |
 
 ### Diagnostics
+- WiFi Signal Strength
+- WiFi SSID
+- Firmware Version
+- Last Update Timestamp
 
-WiFi Signal • Firmware Version • Last Update • Availability Status
-
-### ⚙️ Configuration (28 Settings)
-
-<details>
-<summary><strong>Click to expand all settings</strong></summary>
-
-**Intervals**
-- Report/Collect/PM Sampling Interval (30-3600s)
-
-**Display**
-- Display Off Time, Auto Slide Time
-- Screensaver Type, Night Mode
-
-**Calibration**
-- Temperature/Humidity/CO2/PM Offset & Zoom
-
-**LED Thresholds**
-- Custom thresholds for all sensors
-
-**Other**
-- Temperature Unit, 12/24h Mode, PM Standard, Timezone
-
-</details>
+### Configuration (28 Settings)
+- Report/Collect Intervals
+- Display Settings (Brightness, Auto-Off)
+- Night Mode (Schedule, Brightness)
+- Temperature Unit & Offset
+- CO2/PM2.5 Calibration
+- LED Thresholds
+- And more...
 
 ---
 
-## 🎨 Dashboard Example
+## 🐕 Watchdog
 
-```yaml
-type: entities
-title: 🌿 Air Quality
-entities:
-  - entity: sensor.qingping_air_monitor_temperature
-  - entity: sensor.qingping_air_monitor_humidity  
-  - entity: sensor.qingping_air_monitor_co2
-  - entity: sensor.qingping_air_monitor_pm25
-  - entity: sensor.qingping_air_monitor_battery
-```
+The integration monitors device connectivity:
+
+| State | Trigger | Action |
+|-------|---------|--------|
+| ⚠️ Warning | 10 min without data | HA notification |
+| 🚨 Critical | 30 min without data | Detailed notification + Cloud re-sync |
+| ✅ Recovered | Data received | Notification dismissed |
+
+**Keep-Alive**: Sends config to device every 5 minutes to prevent timeouts.
 
 ---
 
-## 🐛 Troubleshooting
+## 🔧 Troubleshooting
 
-<details>
-<summary><strong>Device not sending data?</strong></summary>
+### Login failed?
+- Use the same credentials as in the Qingping+ app
+- Check your email address is correct
 
-- Verify MQTT config at developer.qingping.co
-- Check that device is bound to the config
-- Wait 1-2 minutes for cloud sync
-- Check MQTT broker for incoming messages
-</details>
+### No devices found?
+- Ensure device is paired in Qingping+ app first
+- Device must be online and connected to WiFi
 
-<details>
-<summary><strong>Device not discovered?</strong></summary>
+### Device not sending data?
+- Wait 1-2 minutes after setup for cloud sync
+- Check MQTT broker is accessible from device's network
+- Try power cycling the device
 
-- Verify data arrives at `qingping/{MAC}/up`
-- MAC must be uppercase without colons
-- Use manual MAC entry as fallback
-</details>
+### Device stopped after some time?
+- This is usually fixed by the Type 18 ACK feature in v4.0.0
+- The watchdog will alert you and attempt recovery
 
-<details>
-<summary><strong>Settings not saving?</strong></summary>
+---
 
-- Settings publish to `qingping/{MAC}/down`
-- Device responds with Type 18 ACK
-- Check HA logs for confirmation
-</details>
+## 📝 Changelog
 
-<details>
-<summary><strong>Factory Reset (last resort)</strong></summary>
+### v4.0.0
+- 🚀 **One-Click Setup** - Automatic device provisioning via Qingping Developer API
+- ✅ **Type 18 ACK** - Proper MQTT protocol acknowledgment (fixes devices stopping)
+- 🐕 **Watchdog** - Connection monitoring with alerts
+- 🔄 **Keep-Alive** - Prevents connection timeouts
+- 🔗 **Rebind Support** - Re-provision devices with new MQTT config
 
-If device stops working:
-1. Press and hold power button for 10 seconds
-2. While holding, also press the touch bar on top
-3. Keep holding until device resets
-4. Re-add in Qingping+ App
-5. Re-bind MQTT config in Developer Portal
-</details>
+### v3.x
+- 28 configuration entities
+- Bilingual support (EN/DE)
+- MQTT auto-discovery
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! Fork → Branch → Commit → Pull Request
+Contributions are welcome! Please open an issue or PR.
 
 ---
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License - see [LICENSE](LICENSE)
 
 ---
 

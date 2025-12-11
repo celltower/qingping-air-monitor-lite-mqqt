@@ -1,0 +1,83 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Qingping Air Monitor",
+        "description": "Wähle die Einrichtungsmethode",
+        "data": {
+          "method": "Einrichtungsmethode"
+        }
+      },
+      "qingping_login": {
+        "title": "Qingping Konto",
+        "description": "Melde dich mit deinen Qingping+ oder Qingping IoT App Zugangsdaten an",
+        "data": {
+          "qingping_email": "E-Mail",
+          "qingping_password": "Passwort"
+        }
+      },
+      "mqtt_config": {
+        "title": "MQTT Broker",
+        "description": "Gib deine MQTT Broker Details ein. Deine Geräte senden Daten hierhin.",
+        "data": {
+          "mqtt_host": "MQTT Host",
+          "mqtt_port": "MQTT Port",
+          "mqtt_username": "MQTT Benutzername",
+          "mqtt_password": "MQTT Passwort"
+        }
+      },
+      "select_devices": {
+        "title": "Geräte auswählen",
+        "description": "{count} Gerät(e) gefunden. Wähle aus:",
+        "data": {
+          "devices": "Geräte"
+        }
+      },
+      "no_devices": {
+        "title": "Keine Geräte gefunden",
+        "description": "Keine Air Monitor Lite Geräte in deinem Qingping Konto gefunden. Stelle sicher, dass du das Gerät in der Qingping+ App gekoppelt hast."
+      },
+      "discovery": {
+        "title": "Geräte-Erkennung",
+        "description": "Wähle ein Gerät oder scanne erneut",
+        "data": {
+          "device": "Gerät",
+          "action": "Aktion"
+        }
+      },
+      "manual": {
+        "title": "Manuelle Einrichtung",
+        "description": "Gib die MAC-Adresse ein. Beispiel: {example}",
+        "data": {
+          "mac": "MAC-Adresse"
+        }
+      }
+    },
+    "error": {
+      "login_failed": "Anmeldung fehlgeschlagen. Prüfe deine Zugangsdaten.",
+      "invalid_mac": "Ungültige MAC-Adresse",
+      "no_device_selected": "Bitte wähle mindestens ein Gerät",
+      "no_devices_found": "Keine Geräte über MQTT gefunden",
+      "no_devices_in_cloud": "Keine Geräte in deinem Qingping Konto"
+    },
+    "abort": {
+      "already_configured": "Gerät bereits konfiguriert",
+      "not_logged_in": "Nicht angemeldet",
+      "no_devices": "Keine Geräte gefunden",
+      "config_creation_failed": "MQTT Konfiguration konnte nicht erstellt werden"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Optionen",
+        "data": {
+          "state_topic": "Status-Topic",
+          "availability_topic": "Verfügbarkeits-Topic",
+          "api_app_key": "API App Key",
+          "api_app_secret": "API App Secret"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "domain": "qingping_monitor",
+  "name": "Qingping Air Monitor",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": ["mqtt"],
+  "documentation": "https://github.com/your-repo/qingping-monitor",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/your-repo/qingping-monitor/issues",
+  "requirements": ["aiohttp"],
+  "version": "4.0.0"
+}
