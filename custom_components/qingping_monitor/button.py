@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity import DeviceInfo
@@ -55,6 +56,7 @@ class QingpingReconnectButton(ButtonEntity):
     _attr_has_entity_name = True
     _attr_name = "Reconnect"
     _attr_icon = "mdi:connection"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC  # Versteckt unter "Diagnose"
 
     def __init__(
         self,
