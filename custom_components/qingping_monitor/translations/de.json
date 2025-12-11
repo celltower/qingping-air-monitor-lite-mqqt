@@ -35,7 +35,17 @@
       },
       "no_devices": {
         "title": "Keine Geräte gefunden",
-        "description": "Keine Air Monitor Lite Geräte in deinem Qingping Konto gefunden. Stelle sicher, dass du das Gerät in der Qingping+ App gekoppelt hast."
+        "description": "Keine Air Monitor Lite Geräte in deinem Qingping Konto gefunden. Stelle sicher, dass du das Gerät in der Qingping+ App gekoppelt hast.",
+        "data": {
+          "action": "Aktion"
+        }
+      },
+      "check_existing_configs": {
+        "title": "Existierende MQTT Config gefunden",
+        "description": "{count} existierende Config(s) für diesen MQTT Broker gefunden: '{config_name}'. Was möchtest du tun?",
+        "data": {
+          "action": "Aktion"
+        }
       },
       "discovery": {
         "title": "Geräte-Erkennung",

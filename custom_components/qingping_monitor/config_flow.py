@@ -59,6 +59,8 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._cloud_devices: list[dict[str, Any]] = []
         self._mqtt_config: dict[str, Any] = {}
         self._qingping_credentials: dict[str, str] = {}
+        self._existing_configs: list[dict[str, Any]] = []
+        self._selected_config_id: int | None = None
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Handle initial step - choose setup method."""
@@ -146,7 +148,8 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_MQTT_USERNAME: user_input.get(CONF_MQTT_USERNAME, ""),
                 CONF_MQTT_PASSWORD: user_input.get(CONF_MQTT_PASSWORD, ""),
             }
-            return await self.async_step_discover_cloud_devices()
+            # Check for existing configs first
+            return await self.async_step_check_existing_configs()
 
         # Try to get MQTT config from HA
         default_host = ""
@@ -179,6 +182,97 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
             description_placeholders={
                 "info": "Enter your MQTT broker details. Devices will send data here."
+            }
+        )
+
+    async def async_step_check_existing_configs(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Step 3: Check for existing MQTT configs and ask user what to do."""
+        if not self._developer_api:
+            return self.async_abort(reason="not_logged_in")
+        
+        # Get existing configs from cloud
+        existing_configs = await self._developer_api.get_configs()
+        
+        # Filter for configs matching our MQTT settings
+        matching_configs = []
+        for config in existing_configs:
+            network_config = config.get("networkConfig", {})
+            mqtt_config = network_config.get("mqttConfig", {})
+            
+            if (mqtt_config.get("host") == self._mqtt_config.get(CONF_MQTT_HOST) and 
+                mqtt_config.get("port") == self._mqtt_config.get(CONF_MQTT_PORT)):
+                matching_configs.append(config)
+        
+        # If no matching config exists, continue normally
+        if not matching_configs:
+            _LOGGER.info("No existing MQTT config found, will create new one")
+            return await self.async_step_discover_cloud_devices()
+        
+        # If we already selected an action, process it
+        if user_input is not None:
+            action = user_input.get("action")
+            
+            if action == "use_existing":
+                # Use the first matching config
+                self._selected_config_id = matching_configs[0].get("id")
+                _LOGGER.info("Using existing config ID: %s", self._selected_config_id)
+            elif action == "update_existing":
+                # Update the existing config
+                config_to_update = matching_configs[0]
+                config_id = config_to_update.get("id")
+                success = await self._developer_api.update_mqtt_config(
+                    config_id=config_id,
+                    name=config_to_update.get("name", "Home Assistant"),
+                    mqtt_host=self._mqtt_config.get(CONF_MQTT_HOST, ""),
+                    mqtt_port=self._mqtt_config.get(CONF_MQTT_PORT, 1883),
+                    mqtt_username=self._mqtt_config.get(CONF_MQTT_USERNAME, ""),
+                    mqtt_password=self._mqtt_config.get(CONF_MQTT_PASSWORD, ""),
+                )
+                if success:
+                    self._selected_config_id = config_id
+                    _LOGGER.info("Updated existing config ID: %s", config_id)
+                else:
+                    _LOGGER.error("Failed to update config")
+            elif action == "create_new":
+                # Create new config (don't set selected_config_id, will be created later)
+                self._selected_config_id = None
+                _LOGGER.info("Will create new config")
+            
+            return await self.async_step_discover_cloud_devices()
+        
+        # Show options to user
+        config_info = matching_configs[0]
+        config_name = config_info.get("name", "Unknown")
+        config_id = config_info.get("id", "?")
+        
+        return self.async_show_form(
+            step_id="check_existing_configs",
+            data_schema=vol.Schema({
+                vol.Required("action", default="use_existing"): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            selector.SelectOptionDict(
+                                value="use_existing", 
+                                label=f"✅ Use existing config '{config_name}' (ID: {config_id})"
+                            ),
+                            selector.SelectOptionDict(
+                                value="update_existing", 
+                                label=f"🔄 Update existing config with new credentials"
+                            ),
+                            selector.SelectOptionDict(
+                                value="create_new", 
+                                label="➕ Create new config (keep existing)"
+                            ),
+                        ],
+                        mode=selector.SelectSelectorMode.LIST,
+                    )
+                )
+            }),
+            description_placeholders={
+                "config_name": config_name,
+                "count": str(len(matching_configs)),
             }
         )
 
@@ -225,9 +319,50 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle no devices found."""
-        if self._developer_api:
-            await self._developer_api.close()
-        return self.async_abort(reason="no_devices")
+        if user_input is not None:
+            action = user_input.get("action")
+            if action == "rescan":
+                # Rescan for devices
+                return await self.async_step_discover_cloud_devices()
+            elif action == "scan_mqtt":
+                # Switch to MQTT scan
+                if self._developer_api:
+                    await self._developer_api.close()
+                    self._developer_api = None
+                return await self.async_step_discovery()
+            elif action == "manual":
+                # Switch to manual entry
+                if self._developer_api:
+                    await self._developer_api.close()
+                    self._developer_api = None
+                return await self.async_step_manual()
+            else:
+                # Cancel
+                if self._developer_api:
+                    await self._developer_api.close()
+                return self.async_abort(reason="no_devices")
+        
+        # Show options
+        return self.async_show_form(
+            step_id="no_devices",
+            data_schema=vol.Schema({
+                vol.Required("action", default="rescan"): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=[
+                            selector.SelectOptionDict(value="rescan", label="🔄 Rescan Cloud"),
+                            selector.SelectOptionDict(value="scan_mqtt", label="🔍 Scan MQTT instead"),
+                            selector.SelectOptionDict(value="manual", label="✏️ Enter MAC manually"),
+                            selector.SelectOptionDict(value="cancel", label="❌ Cancel"),
+                        ],
+                        mode=selector.SelectSelectorMode.LIST,
+                    )
+                )
+            }),
+            errors={"base": "no_devices_in_cloud"},
+            description_placeholders={
+                "info": "No Air Monitor Lite devices found. Make sure device is paired in Qingping+ app."
+            }
+        )
 
     async def async_step_select_devices(
         self, user_input: dict[str, Any] | None = None
@@ -291,14 +426,19 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not self._developer_api:
             return self.async_abort(reason="not_logged_in")
 
-        # Find or create MQTT config
-        config_id = await self._developer_api.find_or_create_config(
-            mqtt_host=self._mqtt_config.get(CONF_MQTT_HOST, ""),
-            mqtt_port=int(self._mqtt_config.get(CONF_MQTT_PORT, 1883)),
-            mqtt_username=self._mqtt_config.get(CONF_MQTT_USERNAME, ""),
-            mqtt_password=self._mqtt_config.get(CONF_MQTT_PASSWORD, ""),
-            config_name="Home Assistant Auto-Config",
-        )
+        # Use selected config or create new one
+        if self._selected_config_id:
+            config_id = self._selected_config_id
+            _LOGGER.info("Using pre-selected config ID: %s", config_id)
+        else:
+            # Create new MQTT config
+            config_id = await self._developer_api.create_mqtt_config(
+                name="Home Assistant Auto-Config",
+                mqtt_host=self._mqtt_config.get(CONF_MQTT_HOST, ""),
+                mqtt_port=int(self._mqtt_config.get(CONF_MQTT_PORT, 1883)),
+                mqtt_username=self._mqtt_config.get(CONF_MQTT_USERNAME, ""),
+                mqtt_password=self._mqtt_config.get(CONF_MQTT_PASSWORD, ""),
+            )
 
         if not config_id:
             return self.async_abort(reason="config_creation_failed")

@@ -35,7 +35,17 @@
       },
       "no_devices": {
         "title": "No Devices Found",
-        "description": "No Air Monitor Lite devices found in your Qingping account. Make sure you've paired the device in the Qingping+ app first."
+        "description": "No Air Monitor Lite devices found in your Qingping account. Make sure you've paired the device in the Qingping+ app first.",
+        "data": {
+          "action": "Action"
+        }
+      },
+      "check_existing_configs": {
+        "title": "Existing MQTT Config Found",
+        "description": "Found {count} existing config(s) for this MQTT broker: '{config_name}'. What would you like to do?",
+        "data": {
+          "action": "Action"
+        }
       },
       "discovery": {
         "title": "Device Discovery",
