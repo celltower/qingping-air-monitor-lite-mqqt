@@ -113,6 +113,19 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_QINGPING_EMAIL: email,
                     CONF_QINGPING_PASSWORD: password,
                 }
+                
+                # Load existing configs immediately after login
+                _LOGGER.info("Login successful, loading existing configs...")
+                all_configs = await self._developer_api.get_configs()
+                for config in all_configs:
+                    product = config.get("product", {})
+                    if product.get("code") == "CGDN1":
+                        network_config = config.get("networkConfig", {})
+                        if network_config.get("type") == 1:  # MQTT type
+                            self._existing_configs.append(config)
+                            _LOGGER.info("Found existing config: %s (ID: %s)", 
+                                       config.get("name"), config.get("id"))
+                
                 return await self.async_step_mqtt_config()
             else:
                 errors["base"] = "login_failed"
@@ -274,15 +287,8 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._cloud_devices = all_devices
         
         if not all_devices:
-            return self.async_show_form(
-                step_id="no_devices",
-                data_schema=vol.Schema({}),
-                errors={"base": "no_devices_in_cloud"},
-                description_placeholders={
-                    "info": "No Air Monitor Lite devices found in your Qingping account. "
-                           "Make sure you've paired the device in the Qingping+ app first."
-                }
-            )
+            _LOGGER.warning("No devices found in cloud, showing rescan options")
+            return await self.async_step_no_devices()
         
         return await self.async_step_select_devices()
 
@@ -294,26 +300,31 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             action = user_input.get("action")
             if action == "rescan":
                 # Rescan for devices
+                _LOGGER.info("User requested rescan")
                 return await self.async_step_discover_cloud_devices()
             elif action == "scan_mqtt":
                 # Switch to MQTT scan
+                _LOGGER.info("User switched to MQTT scan")
                 if self._developer_api:
                     await self._developer_api.close()
                     self._developer_api = None
                 return await self.async_step_discovery()
             elif action == "manual":
                 # Switch to manual entry
+                _LOGGER.info("User switched to manual entry")
                 if self._developer_api:
                     await self._developer_api.close()
                     self._developer_api = None
                 return await self.async_step_manual()
             else:
                 # Cancel
+                _LOGGER.info("User cancelled setup")
                 if self._developer_api:
                     await self._developer_api.close()
                 return self.async_abort(reason="no_devices")
         
-        # Show options
+        # Show options with error message
+        _LOGGER.info("Showing no_devices step with rescan options")
         return self.async_show_form(
             step_id="no_devices",
             data_schema=vol.Schema({
