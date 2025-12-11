@@ -40,13 +40,6 @@
           "action": "Action"
         }
       },
-      "check_existing_configs": {
-        "title": "Existing MQTT Config Found",
-        "description": "Found {count} existing config(s) for this MQTT broker: '{config_name}'. What would you like to do?",
-        "data": {
-          "action": "Action"
-        }
-      },
       "discovery": {
         "title": "Device Discovery",
         "description": "Select a device or scan again",
@@ -68,7 +61,8 @@
       "invalid_mac": "Invalid MAC address",
       "no_device_selected": "Please select at least one device",
       "no_devices_found": "No devices found on MQTT",
-      "no_devices_in_cloud": "No devices in your Qingping account"
+      "no_devices_in_cloud": "No devices in your Qingping account",
+      "update_failed": "Failed to update cloud config. Try again."
     },
     "abort": {
       "already_configured": "Device already configured",

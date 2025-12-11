@@ -255,9 +255,13 @@ async def _send_ack(msg_id: int) -> None:
 Step 1: user          → Methode wählen (Auto/Scan/Manual)
 Step 2: qingping_login → Email + Password
 Step 3: mqtt_config    → MQTT Broker Details
+        → Lädt automatisch existierende Cloud-Config
+        → Füllt Formular mit Cloud-Werten vor
+        → Bei Änderungen: Update der Cloud-Config
 Step 4: discover_cloud_devices → Geräte von Cloud holen
-Step 5: select_devices → Auswählen welche zu installieren
-        → _provision_devices() → Config erstellen + Geräte binden
+Step 5: no_devices    → Falls leer: Rescan/Switch zu MQTT/Manual
+Step 6: select_devices → Auswählen welche zu installieren
+        → _provision_devices() → Config nutzen/updaten + Geräte binden
 ```
 
 ### developer_api.py - Wichtige Methoden
@@ -339,30 +343,39 @@ class QingpingWatchdog:
 
 ---
 
-## 🎯 v4.0.1 Updates (Dezember 2024)
+## 🎯 v4.1.0 Updates (Dezember 2024)
 
 ### ✅ Reload-Funktionalität
 - Integration kann jetzt neu geladen werden ohne HA Neustart!
 - Bei Optionsänderungen lädt sich die Integration automatisch neu
 - Manuelle Reload über UI: Einstellungen → Geräte & Dienste → ⋮ → Neu laden
+- **WICHTIG:** Nach HACS Update ist EINMAL ein HA-Neustart nötig (Python Module Cache)
+
+### ✅ Intelligenter Config Management (Auto-Sync)
+- **Automatisches Laden**: Lädt existierende Cloud-Config beim Setup und füllt Formular vor
+- **Smart Update**: 
+  - Werte unverändert → Nutzt existierende Config
+  - Werte geändert → Aktualisiert Cloud-Config automatisch
+  - Keine Config vorhanden → Erstellt neue Config
+- **Transparenz**: Zeigt an woher die Werte kommen (Cloud Config 'Mainmode' oder HA MQTT)
+- **Zero-Duplikate**: Verhindert unnötige Config-Duplikate im Developer Portal
 
 ### ✅ Verbesserter Auto-Setup Flow
 - **Rescan-Option**: Wenn keine Geräte gefunden werden, kann man neu scannen oder zur MQTT/manuellen Eingabe wechseln
-- **MQTT Config Check**: Prüft ob bereits eine MQTT Config im Developer Portal existiert
-- **Überschreiben-Dialog**: User kann wählen zwischen:
-  - Existierende Config verwenden
-  - Existierende Config aktualisieren (neue Credentials)
-  - Neue Config erstellen (alte behalten)
+- **Pre-filled Values**: MQTT-Werte werden aus existierender Cloud-Config oder HA MQTT Integration geladen
+- **Seamless Experience**: Kein extra Dialog-Step mehr - alles in einem Flow
 
-### Config Flow Struktur (neu)
+### Config Flow Struktur (v4.1.0)
 ```
-Step 1: user                      → Methode wählen
-Step 2: qingping_login           → Login
-Step 3: mqtt_config              → MQTT Details
-Step 4: check_existing_configs   → 🆕 Prüfung existierender Configs
-Step 5: discover_cloud_devices   → Geräte abrufen
-Step 6: no_devices               → 🆕 Mit Rescan-Option
-Step 7: select_devices           → Auswahl
+Step 1: user                    → Methode wählen
+Step 2: qingping_login         → Login
+Step 3: mqtt_config            → 🆕 MQTT Details (auto-filled from cloud!)
+                                  ├─ Lädt existierende Cloud-Config
+                                  ├─ Füllt Formular vor
+                                  └─ Bei Änderung: Auto-Update der Cloud-Config
+Step 4: discover_cloud_devices → Geräte abrufen
+Step 5: no_devices            → 🆕 Mit Rescan-Optionen
+Step 6: select_devices        → Geräte auswählen
 ```
 
 ## 📝 TODO / Future Ideas
@@ -406,4 +419,4 @@ logger:
 ---
 
 *Zuletzt aktualisiert: Dezember 2024*
-*Version: 4.0.1*
+*Version: 4.1.0*

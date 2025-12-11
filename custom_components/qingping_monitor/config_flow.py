@@ -142,30 +142,92 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
+            # Store user input
             self._mqtt_config = {
                 CONF_MQTT_HOST: user_input.get(CONF_MQTT_HOST, ""),
                 CONF_MQTT_PORT: user_input.get(CONF_MQTT_PORT, 1883),
                 CONF_MQTT_USERNAME: user_input.get(CONF_MQTT_USERNAME, ""),
                 CONF_MQTT_PASSWORD: user_input.get(CONF_MQTT_PASSWORD, ""),
             }
-            # Check for existing configs first
-            return await self.async_step_check_existing_configs()
+            
+            # Check if we need to update existing config
+            if self._existing_configs:
+                cloud_config = self._existing_configs[0]
+                cloud_mqtt = cloud_config.get("networkConfig", {}).get("mqttConfig", {})
+                
+                # Check if user changed any values
+                changed = (
+                    cloud_mqtt.get("host") != self._mqtt_config.get(CONF_MQTT_HOST) or
+                    cloud_mqtt.get("port") != self._mqtt_config.get(CONF_MQTT_PORT) or
+                    cloud_mqtt.get("username") != self._mqtt_config.get(CONF_MQTT_USERNAME) or
+                    cloud_mqtt.get("password") != self._mqtt_config.get(CONF_MQTT_PASSWORD)
+                )
+                
+                if changed:
+                    # User changed something - update the cloud config
+                    config_id = cloud_config.get("id")
+                    _LOGGER.info("User changed MQTT settings, updating cloud config %s", config_id)
+                    
+                    success = await self._developer_api.update_mqtt_config(
+                        config_id=config_id,
+                        name=cloud_config.get("name", "Home Assistant"),
+                        mqtt_host=self._mqtt_config.get(CONF_MQTT_HOST, ""),
+                        mqtt_port=self._mqtt_config.get(CONF_MQTT_PORT, 1883),
+                        mqtt_username=self._mqtt_config.get(CONF_MQTT_USERNAME, ""),
+                        mqtt_password=self._mqtt_config.get(CONF_MQTT_PASSWORD, ""),
+                    )
+                    
+                    if not success:
+                        errors["base"] = "update_failed"
+                        _LOGGER.error("Failed to update cloud config")
+                
+                # Use the existing config ID
+                self._selected_config_id = cloud_config.get("id")
+            else:
+                # No existing config - will create new one
+                self._selected_config_id = None
+            
+            if not errors:
+                return await self.async_step_discover_cloud_devices()
 
-        # Try to get MQTT config from HA
+        # Load existing cloud config if available
+        if not self._existing_configs and self._developer_api:
+            all_configs = await self._developer_api.get_configs()
+            for config in all_configs:
+                product = config.get("product", {})
+                if product.get("code") == "CGDN1":
+                    network_config = config.get("networkConfig", {})
+                    if network_config.get("type") == 1:
+                        self._existing_configs.append(config)
+        
+        # Set defaults from existing cloud config or HA MQTT
         default_host = ""
         default_port = 1883
         default_user = ""
+        default_pass = ""
+        config_source = "HA MQTT"
         
-        # Check if MQTT integration is configured
-        mqtt_entry = None
-        for entry in self.hass.config_entries.async_entries("mqtt"):
-            mqtt_entry = entry
-            break
-        
-        if mqtt_entry:
-            default_host = mqtt_entry.data.get("broker", "")
-            default_port = mqtt_entry.data.get("port", 1883)
-            default_user = mqtt_entry.data.get("username", "")
+        if self._existing_configs:
+            # Use values from cloud config
+            cloud_config = self._existing_configs[0]
+            cloud_mqtt = cloud_config.get("networkConfig", {}).get("mqttConfig", {})
+            default_host = cloud_mqtt.get("host", "")
+            default_port = cloud_mqtt.get("port", 1883)
+            default_user = cloud_mqtt.get("username", "")
+            default_pass = cloud_mqtt.get("password", "")
+            config_source = f"Cloud Config '{cloud_config.get('name')}'"
+            _LOGGER.info("Pre-filling MQTT settings from cloud config: %s", cloud_config.get("name"))
+        else:
+            # Try to get MQTT config from HA
+            mqtt_entry = None
+            for entry in self.hass.config_entries.async_entries("mqtt"):
+                mqtt_entry = entry
+                break
+            
+            if mqtt_entry:
+                default_host = mqtt_entry.data.get("broker", "")
+                default_port = mqtt_entry.data.get("port", 1883)
+                default_user = mqtt_entry.data.get("username", "")
 
         return self.async_show_form(
             step_id="mqtt_config",
@@ -175,104 +237,13 @@ class QingpingConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     selector.NumberSelectorConfig(min=1, max=65535, mode=selector.NumberSelectorMode.BOX)
                 ),
                 vol.Optional(CONF_MQTT_USERNAME, default=default_user): selector.TextSelector(),
-                vol.Optional(CONF_MQTT_PASSWORD): selector.TextSelector(
+                vol.Optional(CONF_MQTT_PASSWORD, default=default_pass): selector.TextSelector(
                     selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD)
                 ),
             }),
             errors=errors,
             description_placeholders={
-                "info": "Enter your MQTT broker details. Devices will send data here."
-            }
-        )
-
-    async def async_step_check_existing_configs(
-        self, user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
-        """Step 3: Check for existing MQTT configs and ask user what to do."""
-        if not self._developer_api:
-            return self.async_abort(reason="not_logged_in")
-        
-        # Get existing configs from cloud
-        existing_configs = await self._developer_api.get_configs()
-        
-        # Filter for configs matching our MQTT settings
-        matching_configs = []
-        for config in existing_configs:
-            network_config = config.get("networkConfig", {})
-            mqtt_config = network_config.get("mqttConfig", {})
-            
-            if (mqtt_config.get("host") == self._mqtt_config.get(CONF_MQTT_HOST) and 
-                mqtt_config.get("port") == self._mqtt_config.get(CONF_MQTT_PORT)):
-                matching_configs.append(config)
-        
-        # If no matching config exists, continue normally
-        if not matching_configs:
-            _LOGGER.info("No existing MQTT config found, will create new one")
-            return await self.async_step_discover_cloud_devices()
-        
-        # If we already selected an action, process it
-        if user_input is not None:
-            action = user_input.get("action")
-            
-            if action == "use_existing":
-                # Use the first matching config
-                self._selected_config_id = matching_configs[0].get("id")
-                _LOGGER.info("Using existing config ID: %s", self._selected_config_id)
-            elif action == "update_existing":
-                # Update the existing config
-                config_to_update = matching_configs[0]
-                config_id = config_to_update.get("id")
-                success = await self._developer_api.update_mqtt_config(
-                    config_id=config_id,
-                    name=config_to_update.get("name", "Home Assistant"),
-                    mqtt_host=self._mqtt_config.get(CONF_MQTT_HOST, ""),
-                    mqtt_port=self._mqtt_config.get(CONF_MQTT_PORT, 1883),
-                    mqtt_username=self._mqtt_config.get(CONF_MQTT_USERNAME, ""),
-                    mqtt_password=self._mqtt_config.get(CONF_MQTT_PASSWORD, ""),
-                )
-                if success:
-                    self._selected_config_id = config_id
-                    _LOGGER.info("Updated existing config ID: %s", config_id)
-                else:
-                    _LOGGER.error("Failed to update config")
-            elif action == "create_new":
-                # Create new config (don't set selected_config_id, will be created later)
-                self._selected_config_id = None
-                _LOGGER.info("Will create new config")
-            
-            return await self.async_step_discover_cloud_devices()
-        
-        # Show options to user
-        config_info = matching_configs[0]
-        config_name = config_info.get("name", "Unknown")
-        config_id = config_info.get("id", "?")
-        
-        return self.async_show_form(
-            step_id="check_existing_configs",
-            data_schema=vol.Schema({
-                vol.Required("action", default="use_existing"): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        options=[
-                            selector.SelectOptionDict(
-                                value="use_existing", 
-                                label=f"✅ Use existing config '{config_name}' (ID: {config_id})"
-                            ),
-                            selector.SelectOptionDict(
-                                value="update_existing", 
-                                label=f"🔄 Update existing config with new credentials"
-                            ),
-                            selector.SelectOptionDict(
-                                value="create_new", 
-                                label="➕ Create new config (keep existing)"
-                            ),
-                        ],
-                        mode=selector.SelectSelectorMode.LIST,
-                    )
-                )
-            }),
-            description_placeholders={
-                "config_name": config_name,
-                "count": str(len(matching_configs)),
+                "info": f"Pre-filled from: {config_source}. You can change these values if needed.",
             }
         )
 
