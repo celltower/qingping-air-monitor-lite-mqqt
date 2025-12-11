@@ -68,9 +68,9 @@ class QingpingReconnectButton(ButtonEntity):
         self._mac = mac
         self._attr_unique_id = f"{DOMAIN}_{mac}_reconnect"
         
-        # Device info
+        # Device info - MUST match sensor.py identifiers!
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, mac)},
+            identifiers={(DOMAIN, f"qingping_{mac}")},
             name=f"Qingping Air Monitor ({_format_mac(mac)})",
             manufacturer="Qingping",
             model="Air Monitor Lite (CGDN1)",
